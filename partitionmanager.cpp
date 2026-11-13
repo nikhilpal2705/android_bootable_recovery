@@ -25,6 +25,7 @@
 #include <map>
 #include <vector>
 #include <algorithm>
+#include <cctype>
 #include <dirent.h>
 #include <time.h>
 #include <errno.h>
@@ -2571,7 +2572,16 @@ int TWPartitionManager::Partition_SDCard(void) {
 
 void TWPartitionManager::Get_Partition_List(string ListType, std::vector<PartitionList> *Partition_List) {
 	std::vector<TWPartition*>::iterator iter;
+	auto sort_display_names = [](std::vector<PartitionList>* list, size_t start) {
+		std::stable_sort(list->begin() + start, list->end(), [](const PartitionList& a, const PartitionList& b) {
+			return std::lexicographical_compare(a.Display_Name.begin(), a.Display_Name.end(),
+				b.Display_Name.begin(), b.Display_Name.end(), [](unsigned char left, unsigned char right) {
+					return std::tolower(left) < std::tolower(right);
+				});
+		});
+	};
 	if (ListType == "mount") {
+		size_t mount_list_start = Partition_List->size();
 		for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 			if ((*iter)->Can_Be_Mounted) {
 				struct PartitionList part;
@@ -2581,6 +2591,7 @@ void TWPartitionManager::Get_Partition_List(string ListType, std::vector<Partiti
 				Partition_List->push_back(part);
 			}
 		}
+		sort_display_names(Partition_List, mount_list_start);
 	} else if (ListType == "storage") {
 		char free_space[255];
 		string Current_Storage = DataManager::GetCurrentStoragePath();
@@ -2617,6 +2628,7 @@ void TWPartitionManager::Get_Partition_List(string ListType, std::vector<Partiti
 	} else if (ListType == "backup") {
 		char backup_size[255];
 		unsigned long long Backup_Size;
+		size_t backup_list_start = Partition_List->size();
 		for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 			if ((*iter)->Can_Be_Backed_Up && !(*iter)->Is_SubPartition && (*iter)->Is_Present) {
 				struct PartitionList part;
@@ -2638,6 +2650,7 @@ void TWPartitionManager::Get_Partition_List(string ListType, std::vector<Partiti
 				Partition_List->push_back(part);
 			}
 		}
+		sort_display_names(Partition_List, backup_list_start);
 	} else if (ListType == "restore") {
 		string Restore_List, restore_path;
 		TWPartition* restore_part = NULL;
@@ -3643,6 +3656,14 @@ void TWPartitionManager::Setup_Super_Devices() {
 }
 
 void TWPartitionManager::Setup_Super_Partition() {
+	// This device already exposes the physical Super block in its fstab.
+	// Don't also add the synthetic logical-partition group to Backup.
+	TWPartition* configured_super = Find_Partition_By_Path("/super");
+	if (configured_super && configured_super->Can_Be_Backed_Up) {
+		LOGINFO("Physical Super partition is configured; skipping duplicate synthetic Super entry.\n");
+		return;
+	}
+
 	TWPartition* superPartition = new TWPartition();
 	std::string superPart = Get_Super_Partition();
 
