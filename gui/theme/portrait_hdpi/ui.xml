@@ -76,7 +76,9 @@
 		<variable name="tw_hide_kb" value="0"/>
 		<variable name="screen_width" value="1080"/>
 		<variable name="screen_height" value="1920"/>
-		<variable name="status_height" value="96"/>
+		<!-- OFRP reports a 140px status/notch region at 2400px display height.
+		     This theme uses 1920 logical pixels, so 112px covers the notch. -->
+		<variable name="status_height" value="112"/>
 		<variable name="header_height" value="256"/>
 		<variable name="navbar_height" value="130"/>
 		<variable name="content_width" value="1008"/>
@@ -114,12 +116,12 @@
 		<variable name="btn4_col3_x" value="558"/>
 		<variable name="btn4_col4_x" value="819"/>
 		<variable name="status_topalign_header_y" value="4"/>
-		<variable name="status_centeralign_header_y" value="27"/>
-		<variable name="status_bottomalign_header_y" value="54"/>
+		<variable name="status_centeralign_header_y" value="35"/>
+		<variable name="status_bottomalign_header_y" value="70"/>
 		<variable name="row1_header_y" value="{statusicons_align}"/>
-		<variable name="row2_header_y" value="96"/>
-		<variable name="row3_header_y" value="114"/>
-		<variable name="row4_header_y" value="192"/>
+		<variable name="row2_header_y" value="112"/>
+		<variable name="row3_header_y" value="130"/>
+		<variable name="row4_header_y" value="208"/>
 		<variable name="row1_y" value="256"/>
 		<variable name="row1a_y" value="288"/>
 		<variable name="row2_y" value="320"/>
@@ -249,12 +251,12 @@
 			<image>
 				<condition var1="tw_busy" var2="1"/>
 				<image resource="logo"/>
-			<placement x="0" y="12"/>
+			<placement x="0" y="28"/>
 			</image>
 
 			<button>
 				<condition var1="tw_busy" var2="0"/>
-				<placement x="0" y="12"/>
+				<placement x="0" y="28"/>
 				<image resource="logo"/>
 				<action function="key">home</action>
 			</button>
