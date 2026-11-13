@@ -544,9 +544,12 @@ void TWPartitionManager::Setup_Fstab_Partitions(bool Display_Error) {
 		Decrypt_Data();
 	#endif
 
-		Update_System_Details();
 		if (Get_Super_Status())
 			Setup_Super_Partition();
+		// Include the dynamic Super partition in the initial size scan. If this
+		// runs before Setup_Super_Partition(), its backup size remains 0 until
+		// the user manually refreshes sizes in the GUI.
+		Update_System_Details();
 		UnMount_Main_Partitions();
 	#ifdef AB_OTA_UPDATER
 		DataManager::SetValue("tw_active_slot", Get_Active_Slot_Display());
