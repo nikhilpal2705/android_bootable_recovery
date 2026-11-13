@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <map>
 #include <vector>
+#include <algorithm>
 #include <dirent.h>
 #include <time.h>
 #include <errno.h>
@@ -2583,6 +2584,7 @@ void TWPartitionManager::Get_Partition_List(string ListType, std::vector<Partiti
 	} else if (ListType == "storage") {
 		char free_space[255];
 		string Current_Storage = DataManager::GetCurrentStoragePath();
+		size_t storage_list_start = Partition_List->size();
 		for (iter = Partitions.begin(); iter != Partitions.end(); iter++) {
 			if ((*iter)->Is_Storage) {
 				struct PartitionList part;
@@ -2598,6 +2600,20 @@ void TWPartitionManager::Get_Partition_List(string ListType, std::vector<Partiti
 				Partition_List->push_back(part);
 			}
 		}
+		// Keep the common storage choices in a predictable order on devices
+		// where the emulated /data storage is registered after removable media.
+		std::stable_sort(Partition_List->begin() + storage_list_start, Partition_List->end(), [](const PartitionList& a, const PartitionList& b) {
+			auto storage_priority = [](const string& path) {
+				if (path == "/data" || path.rfind("/data/", 0) == 0)
+					return 0;
+				if (path == "/external_sd" || path == "/external_sdcard")
+					return 1;
+				if (path == "/usb_otg")
+					return 2;
+				return 3;
+			};
+			return storage_priority(a.Mount_Point) < storage_priority(b.Mount_Point);
+		});
 	} else if (ListType == "backup") {
 		char backup_size[255];
 		unsigned long long Backup_Size;
